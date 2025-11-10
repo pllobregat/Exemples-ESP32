@@ -1,0 +1,44 @@
+// Exemple de tipus de variables amb ESP32
+// Pots provar aquest codi a https://wokwi.com/
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  // 🔢 int: enter sencer (positiu o negatiu)
+  int temperatura = 25;
+  Serial.println("Temperatura (int): " + String(temperatura));
+
+  // 🔢 unsigned int: enter positiu
+  unsigned int llum = 1023;
+  Serial.println("Llum (unsigned int): " + String(llum));
+
+  // 🔢 long: enter gran (més capacitat que int)
+  long distància = 123456789;
+  Serial.println("Distància (long): " + String(distància));
+
+  // 🔢 float: número decimal
+  float voltatge = 3.3;
+  Serial.println("Voltatge (float): " + String(voltatge, 2));
+
+  // 🔢 double: com float però amb més precisió (a vegades igual en microcontroladors)
+  double precisio = 3.1415926535;
+  Serial.println("Precisió (double): " + String(precisio, 5));
+
+  // 🔤 char: un sol caràcter
+  char lletra = 'A';
+  Serial.print("Lletra (char): ");
+  Serial.println(lletra);
+
+  // 🔤 String: cadena de text
+  String missatge = "Hola ESP32!";
+  Serial.println("Missatge (String): " + missatge);
+
+  // 🔘 bool: valor booleà (true o false)
+  bool activat = true;
+  Serial.println("Activat (bool): " + String(activat));
+}
+
+void loop() {
+  // No fem res al loop en aquest exemple
+}
