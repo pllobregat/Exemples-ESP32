@@ -1,17 +1,18 @@
-// Codi Blink per ESP32 amb temps d'encesa i apagat configurables
+const int LED_PIN = 23;
+int TEMPS_ENCES = 250;
+int TEMPS_APAGAT = 500;
 
-const int LED_PIN = 23;               // Pin on està connectat el LED
-const unsigned long TEMPS_ENCES = 500; // Temps d'encesa en mil·lisegons
-const unsigned long TEMPS_APAGAT = 1000; // Temps d'apagat en mil·lisegons
 
 void setup() {
-  pinMode(LED_PIN, OUTPUT); // Configura el pin com a sortida
+  pinMode(LED_PIN, OUTPUT);
 }
 
-void loop() {
-  digitalWrite(LED_PIN, HIGH);  // Encén el LED
-  delay(TEMPS_ENCES);           // Espera el temps d'encesa
 
-  digitalWrite(LED_PIN, LOW);   // Apaga el LED
-  delay(TEMPS_APAGAT);          // Espera el temps d'apagat
+void loop() {
+  digitalWrite(LED_PIN, HIGH);
+  delay(TEMPS_ENCES);
+
+
+  digitalWrite(LED_PIN, LOW);
+  delay(TEMPS_APAGAT);
 }
