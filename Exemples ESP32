@@ -1,44 +1,17 @@
-// Exemple de tipus de variables amb ESP32
-// Pots provar aquest codi a https://wokwi.com/
+// Codi Blink per ESP32 amb temps d'encesa i apagat configurables
+
+const int LED_PIN = 23;               // Pin on està connectat el LED
+const unsigned long TEMPS_ENCES = 500; // Temps d'encesa en mil·lisegons
+const unsigned long TEMPS_APAGAT = 1000; // Temps d'apagat en mil·lisegons
 
 void setup() {
-  Serial.begin(115200);
-  delay(1000);
-
-  // 🔢 int: enter sencer (positiu o negatiu)
-  int temperatura = 25;
-  Serial.println("Temperatura (int): " + String(temperatura));
-
-  // 🔢 unsigned int: enter positiu
-  unsigned int llum = 1023;
-  Serial.println("Llum (unsigned int): " + String(llum));
-
-  // 🔢 long: enter gran (més capacitat que int)
-  long distància = 123456789;
-  Serial.println("Distància (long): " + String(distància));
-
-  // 🔢 float: número decimal
-  float voltatge = 3.3;
-  Serial.println("Voltatge (float): " + String(voltatge, 2));
-
-  // 🔢 double: com float però amb més precisió (a vegades igual en microcontroladors)
-  double precisio = 3.1415926535;
-  Serial.println("Precisió (double): " + String(precisio, 5));
-
-  // 🔤 char: un sol caràcter
-  char lletra = 'A';
-  Serial.print("Lletra (char): ");
-  Serial.println(lletra);
-
-  // 🔤 String: cadena de text
-  String missatge = "Hola ESP32!";
-  Serial.println("Missatge (String): " + missatge);
-
-  // 🔘 bool: valor booleà (true o false)
-  bool activat = true;
-  Serial.println("Activat (bool): " + String(activat));
+  pinMode(LED_PIN, OUTPUT); // Configura el pin com a sortida
 }
 
 void loop() {
-  // No fem res al loop en aquest exemple
+  digitalWrite(LED_PIN, HIGH);  // Encén el LED
+  delay(TEMPS_ENCES);           // Espera el temps d'encesa
+
+  digitalWrite(LED_PIN, LOW);   // Apaga el LED
+  delay(TEMPS_APAGAT);          // Espera el temps d'apagat
 }
