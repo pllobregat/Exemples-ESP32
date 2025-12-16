@@ -1,57 +1,73 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-const char* ssid = "NOM_WIFI";
-const char* password = "CONTRASENYA_WIFI";
+const char* ssid = "iPhone de Llobre";
+const char* password = "llobree123";
 
 WebServer server(80);
 
-const int ledPin = 18;
-bool ledState = false;
+const int ledPin = 2; // GPIO del LED
 
 void handleRoot() {
-  String html = "<h1>ESP32 Web Server</h1>";
-  html += "LED state: ";
-  html += (ledState ? "ON" : "OFF");
-  html += "<br><a href=\"/on\"><button>Turn ON</button></a>";
-  html += "<a href=\"/off\"><button>Turn OFF</button></a>";
-  html += "<a href=\"/blink\"><button>Blink</button></a>";
+  String html = "<!DOCTYPE html><html>";
+  html += "<head><meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<style>button{padding:20px;font-size:20px;margin:10px;}</style></head>";
+  html += "<body><h1>Control LED ESP32</h1>";
+  html += "<button onclick=\"location.href='/on'\">ON</button>";
+  html += "<button onclick=\"location.href='/off'\">OFF</button>";
+  html += "<button onclick=\"location.href='/blink'\">BLINK</button>";
+  html += "</body></html>";
+
   server.send(200, "text/html", html);
 }
 
 void handleOn() {
   digitalWrite(ledPin, HIGH);
-  ledState = true;
-  handleRoot();
+  Serial.println("LED ENCENDIDO");
+  server.sendHeader("Location", "/");
+  server.send(303);
 }
 
 void handleOff() {
   digitalWrite(ledPin, LOW);
-  ledState = false;
-  handleRoot();
+  Serial.println("LED APAGADO");
+  server.sendHeader("Location", "/");
+  server.send(303);
 }
 
 void handleBlink() {
+  Serial.println("LED PARPADEANDO...");
   for (int i = 0; i < 5; i++) {
     digitalWrite(ledPin, HIGH);
-    delay(300);
+    delay(200);
     digitalWrite(ledPin, LOW);
-    delay(300);
+    delay(200);
   }
-  ledState = false;
-  handleRoot();
+  Serial.println("PARPADEO COMPLETADO");
+  server.sendHeader("Location", "/");
+  server.send(303);
 }
 
 void setup() {
+  Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
+
   WiFi.begin(ssid, password);
+  Serial.print("Conectando a la WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
+    Serial.print(".");
   }
+
+  Serial.println("\nConectado!");
+  Serial.print("IP del servidor: ");
+  Serial.println(WiFi.localIP());
+
   server.on("/", handleRoot);
   server.on("/on", handleOn);
   server.on("/off", handleOff);
   server.on("/blink", handleBlink);
+
   server.begin();
 }
 
