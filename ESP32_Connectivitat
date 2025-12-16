@@ -1,0 +1,154 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <time.h>
+
+#define WIFI_SSID      "Wokwi-GUEST"
+#define WIFI_PASSWORD  ""
+
+#define STATUS_LED     2                // LED estàndard a moltes plaques ESP32 (Wokwi)
+#define NTP_SERVER     "pool.ntp.org"
+#define GMT_OFFSET_SEC 3600             // Catalunya (UTC+1 a hivern)
+#define DST_OFFSET_SEC 0                // Ajust manual si cal (UTC+2 a estiu: 7200)
+
+void connectWiFi(unsigned long timeoutMs = 15000) {
+  Serial.print("Connectant a WiFi: ");
+  Serial.println(WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeoutMs) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("WiFi connectat. IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("ERROR: Timeout connectant a WiFi");
+  }
+}
+
+bool syncNTP(unsigned long timeoutMs = 10000) {
+  Serial.print("Sincronitzant hora amb NTP: ");
+  Serial.println(NTP_SERVER);
+  configTime(GMT_OFFSET_SEC, DST_OFFSET_SEC, NTP_SERVER);
+
+  unsigned long start = millis();
+  time_t now;
+  struct tm timeinfo;
+
+  do {
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    if (timeinfo.tm_year > (1970 - 1900)) {
+      Serial.println("NTP OK");
+      return true;
+    }
+    delay(250);
+  } while (millis() - start < timeoutMs);
+
+  Serial.println("ERROR: Timeout NTP");
+  return false;
+}
+
+String httpGet(const char* url, uint16_t timeoutMs = 10000) {
+  if (WiFi.status() != WL_CONNECTED) {
+    return "ERROR: Sense WiFi";
+  }
+
+  HTTPClient http;
+  http.setTimeout(timeoutMs);
+  http.begin(url);
+  int code = http.GET();
+
+  if (code > 0) {
+    String payload = http.getString();
+    http.end();
+    return payload;
+  } else {
+    String err = "ERROR HTTP: " + String(code);
+    http.end();
+    return err;
+  }
+}
+
+// Extracció simple del camp "datetime" del JSON de WorldTimeAPI
+String extractDatetime(const String& json) {
+  int pos = json.indexOf("\"datetime\":\"");
+  if (pos < 0) return "datetime no trobat";
+  pos += 12;
+  int end = json.indexOf("\"", pos);
+  if (end < 0) return "datetime no trobat";
+  return json.substring(pos, end);
+}
+
+void printLocalTime() {
+  time_t now;
+  struct tm timeinfo;
+  time(&now);
+  localtime_r(&now, &timeinfo);
+
+  char buf[64];
+  strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+  Serial.print("Hora local (configTime): ");
+  Serial.println(buf);
+}
+
+void blinkOK(uint8_t times = 2) {
+  for (uint8_t i = 0; i < times; i++) {
+    digitalWrite(STATUS_LED, HIGH);
+    delay(150);
+    digitalWrite(STATUS_LED, LOW);
+    delay(150);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(STATUS_LED, OUTPUT);
+  digitalWrite(STATUS_LED, LOW);
+
+  connectWiFi();
+  if (WiFi.status() == WL_CONNECTED) {
+    blinkOK(3);
+  }
+
+  if (syncNTP()) {
+    printLocalTime();
+  }
+
+  Serial.println("Consultant WorldTimeAPI (Europe/Madrid)...");
+  String json = httpGet("http://worldtimeapi.org/api/timezone/Europe/Madrid");
+  Serial.println("Resposta JSON (truncada si és molt llarga):");
+  Serial.println(json.length() > 400 ? json.substring(0, 400) + "..." : json);
+
+  String dt = extractDatetime(json);
+  Serial.print("datetime extrait: ");
+  Serial.println(dt);
+
+  Serial.println("Setup finalitzat.");
+}
+
+void loop() {
+  // Parpelleig suau si hi ha WiFi
+  if (WiFi.status() == WL_CONNECTED) {
+    digitalWrite(STATUS_LED, HIGH);
+    delay(100);
+    digitalWrite(STATUS_LED, LOW);
+    delay(900);
+  } else {
+    // Si cau la connexió, intenta reconnectar de forma esporàdica
+    connectWiFi(5000);
+    delay(2000);
+  }
+
+  // Mostra l'hora local cada 10s
+  static unsigned long lastPrint = 0;
+  if (millis() - lastPrint > 10000) {
+    lastPrint = millis();
+    printLocalTime();
+  }
+}
